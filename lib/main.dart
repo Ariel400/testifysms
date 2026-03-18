@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'theme/app_theme.dart';
 import 'providers/sms_provider.dart';
 import 'screens/inbox_screen.dart';
 import 'screens/permission_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Chargement de la configuration depuis le fichier .env
+  await dotenv.load(fileName: '.env');
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -90,22 +95,28 @@ class _SplashScreen extends StatelessWidget {
               tween: Tween(begin: 0.9, end: 1.0),
               duration: const Duration(milliseconds: 1000),
               curve: Curves.easeInOutSine,
-              builder: (_, value, child) => Transform.scale(scale: value, child: child),
+              builder: (_, value, child) =>
+                  Transform.scale(scale: value, child: child),
               child: Container(
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFF97316), Color(0xFFFDBA74)], // L'orange CIE
+                    colors: [Color(0xFFF97316), Color(0xFFFDBA74)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFFF97316).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                    BoxShadow(
+                      color: const Color(0xFFF97316).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
-                child: const Icon(Icons.sms_rounded, color: Colors.white, size: 42),
+                child:
+                    const Icon(Icons.sms_rounded, color: Colors.white, size: 42),
               ),
             ),
             const SizedBox(height: 24),
@@ -119,12 +130,16 @@ class _SplashScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('Initialisation...', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
+            const Text(
+              'Chargement de la configuration...',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
             const SizedBox(height: 32),
             const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF)),
+              child:
+                  CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
