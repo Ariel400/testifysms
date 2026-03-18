@@ -1,0 +1,28 @@
+name: testifysms
+description: "Application SMS Android avec Material Design 3."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Package principal pour envoyer/recevoir des SMS sur Android
+  telephony: ^0.2.0
+  # Gestion d'état réactive
+  provider: ^6.1.2
+  # Formatage des dates et heures
+  intl: ^0.19.0
+  # Gestion des permissions système (READ_SMS, SEND_SMS, RECEIVE_SMS)
+  permission_handler: ^11.3.1
+  lucide_icons: ^0.257.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
