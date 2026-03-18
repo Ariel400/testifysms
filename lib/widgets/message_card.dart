@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:telephony/telephony.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../providers/sms_provider.dart';
 
-/// Card SMS style Google Messages — fond blanc, avatar coloré, layout épuré.
 class MessageCard extends StatelessWidget {
-  final SmsMessage message;
+  final AppSms appSms;
   final VoidCallback? onTap;
 
-  const MessageCard({super.key, required this.message, this.onTap});
+  const MessageCard({super.key, required this.appSms, this.onTap});
 
   String _formatDate(int? timestamp) {
     if (timestamp == null) return '';
@@ -17,105 +17,80 @@ class MessageCard extends StatelessWidget {
     final msgDay = DateTime(date.year, date.month, date.day);
 
     if (msgDay == today) return DateFormat('HH:mm').format(date);
-    if (msgDay == today.subtract(const Duration(days: 1))) {
-      return 'Hier';
-    }
-    return DateFormat('dd/MM').format(date);
-  }
-
-  /// Palette Google — couleur déterministe selon l'expéditeur
-  Color _avatarColor(String? address) {
-    const colors = [
-      Color(0xFF1A73E8), // Google Blue
-      Color(0xFF34A853), // Google Green
-      Color(0xFFEA4335), // Google Red
-      Color(0xFFFBBC05), // Google Yellow
-      Color(0xFF9334E6), // Purple
-      Color(0xFF00BCD4), // Cyan
-    ];
-    if (address == null) return colors[0];
-    final hash = address.codeUnits.fold(0, (p, e) => p + e);
-    return colors[hash % colors.length];
-  }
-
-  String _initials(String? address) {
-    if (address == null || address.isEmpty) return '?';
-    final cleaned = address.replaceAll(RegExp(r'\D'), '');
-    if (cleaned.length >= 2) return cleaned.substring(cleaned.length - 2);
-    return address[0].toUpperCase();
+    if (msgDay == today.subtract(const Duration(days: 1))) return 'Hier, ${DateFormat('HH:mm').format(date)}';
+    return DateFormat('dd MMM HH:mm').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = _avatarColor(message.address);
+    final bool isSent = appSms.isSent;
+    final message = appSms.message;
 
     return InkWell(
       onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ── Avatar rond coloré ──────────────────────────────────────
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: color,
-              child: Text(
-                _initials(message.address),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Align(
+          alignment: isSent ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSent ? const Color(0xFFFFEDD5) : const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: Radius.circular(isSent ? 16 : 4),
+                bottomRight: Radius.circular(isSent ? 4 : 16),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isSent ? 'To: ${message.address ?? "Inconnu"}' : 'From: ${message.address ?? "Inconnu"}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isSent ? const Color(0xFF111827) : const Color(0xFF1F2937),
+                    letterSpacing: -0.3,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // ── Contenu ─────────────────────────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          message.address ?? 'Inconnu',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Color(0xFF202124),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        _formatDate(message.date),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF5F6368),
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 6),
+                Text(
+                  message.body ?? '',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isSent ? const Color(0xFF111827) : const Color(0xFF1F2937),
+                    height: 1.4,
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    message.body ?? '',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF5F6368),
-                      height: 1.4,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isSent ? _formatDate(message.date) : 'Status: 200 OK • ${_formatDate(message.date)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isSent ? const Color(0xFF111827).withOpacity(0.5) : const Color(0xFF6B7280),
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                    if (isSent) ...[
+                      const SizedBox(width: 4),
+                      const Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFF10B981)),
+                    ]
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

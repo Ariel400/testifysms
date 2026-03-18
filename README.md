@@ -1,14 +1,12 @@
-# TestifySMS — Application de test SMS
-
-Application Flutter pour envoyer et recevoir des SMS de test, avec une interface inspirée de Google Messages.
+Application Flutter pour l'envoi et la réception de SMS de test, dotée d'une interface de chat moderne et unifiée inspirée de la charte graphique CIE.
 
 ## 🚀 Fonctionnalités
 
-- **Envoi de SMS** : Formulaire avec validation et compteur de caractères
-- **Boîte de réception** : Liste des SMS reçus avec détails
-- **Historique** : Onglet pour les SMS envoyés
-- **Notifications** : Alertes visuelles pour l'envoi et la réception
-- **Actualisation** : Bouton pour rafraîchir la liste des messages
+- **Interface Chat unifiée** : Un seul flux temporel pour les messages envoyés (User) et reçus (Serveur).
+- **Envoi de SMS** : Formulaire ergonomique ancré en bas de l'écran avec validation.
+- **Visualisation des statuts** : Bulles de chat différenciées avec indicateurs de succès (checkmarks).
+- **Splash Screen Premium** : Écran d'accueil animé et brandé "SMS Gateway Tester".
+- **Date/Heure précise** : Formatage local des timestamps de réception et d'envoi.
 
 ## 🛠️ Installation
 
@@ -38,7 +36,7 @@ Application Flutter pour envoyer et recevoir des SMS de test, avec une interface
 
 ## 📱 Permissions Android
 
-Pour que l'application fonctionne correctement, vous devez accorder les permissions SMS :
+L'application nécessite les permissions SMS standard. Sur Android >= 10, il est recommandé de définir l'app comme **application SMS par défaut** pour une réception optimale en temps réel.
 
 ```xml
 <uses-permission android:name="android.permission.SEND_SMS" />
@@ -47,25 +45,21 @@ Pour que l'application fonctionne correctement, vous devez accorder les permissi
 <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 ```
 
-Sur les appareils Android récents, vous devrez également définir l'application comme application SMS par défaut pour recevoir les messages.
+## 🎨 Design System (CIE)
 
-## 🎨 Design
+L'application respecte les codes visuels de la **CIE** tout en gardant une esthétique minimaliste :
 
-L'application utilise les couleurs et composants suivants :
-
-- **Couleurs principales** :
-  - Bleu Google : `#1A73E8`
-  - Vert Google : `#34A853`
-  - Rouge Google : `#EA4335`
-  - Jaune Google : `#FBBC05`
-  - Blanc : `#FFFFFF`
-  - Gris : `#202124`, `#5F6368`, `#E8EAED`
+- **Couleurs** :
+  - Background App : `#F9FAFB` (Gris perle)
+  - Bulle Envoyée : `#FFEDD5` (Orange très pâle)
+  - Bulle Reçue : `#F3F4F6` (Gris doux)
+  - Bouton d'action : `#000000` (Noir pur)
+  - Statuts : Vert `#10B981` / Rouge `#EF4444`
 
 - **Composants** :
-  - `MessageCard` : Carte de message avec avatar coloré et date formatée
-  - `TabBar` : Onglets pour les messages reçus et envoyés
-  - `SnackBar` : Notifications avec icônes et couleurs adaptées
-  - `EmptyState` : Message d'état vide avec icône et bouton de rafraîchissement
+  - `MessageCard` : Bulle de chat dynamique avec alignement gauche/droite.
+  - `LucideIcons` : Bibliothèque d'icônes premium pour une interface haut de gamme.
+  - `BottomCard` : Zone de saisie flottante avec coins arrondis `3xl`.
 
 ## 📂 Structure du projet
 
@@ -102,4 +96,4 @@ Pour toute question ou problème, veuillez ouvrir une issue sur le dépôt.
 
 ---
 
-**Développé avec ❤️ avec Flutter**
+**Développé avec ❤️ BadRequest**

@@ -4,21 +4,16 @@ import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/sms_provider.dart';
 import 'screens/inbox_screen.dart';
-
 import 'screens/permission_screen.dart';
 
-/// Point d'entrée de l'application TestifySMS.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Force l'orientation portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
   runApp(
-    // Injection du SmsProvider à la racine de l'arbre de widgets
     ChangeNotifierProvider(
       create: (_) => SmsProvider(),
       child: const TestifySmsApp(),
@@ -26,26 +21,22 @@ void main() {
   );
 }
 
-/// Widget racine de l'application.
 class TestifySmsApp extends StatelessWidget {
   const TestifySmsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TestifySMS',
+      title: 'SMS Gateway Tester',
       debugShowCheckedModeBanner: false,
-      // Thèmes Material 3
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Thème clair forcé
+      themeMode: ThemeMode.light,
       home: const _AppInitializer(),
     );
   }
 }
 
-/// Widget d'initialisation : lance la vérification des permissions
-/// puis route vers l'écran approprié.
 class _AppInitializer extends StatefulWidget {
   const _AppInitializer();
 
@@ -69,12 +60,10 @@ class _AppInitializerState extends State<_AppInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    // Écran de chargement initial
     if (!_initialized) {
       return const _SplashScreen();
     }
 
-    // Routage selon l'état des permissions
     return Consumer<SmsProvider>(
       builder: (_, provider, __) {
         if (!provider.hasPermission) {
@@ -86,77 +75,56 @@ class _AppInitializerState extends State<_AppInitializer> {
   }
 }
 
-// ─── Écran de démarrage (Splash) ──────────────────────────────────────────────
-
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: const Color(0xFFF9FAFB),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Logo animé
             TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOutBack,
-              builder: (_, value, child) =>
-                  Transform.scale(scale: value, child: child),
+              tween: Tween(begin: 0.9, end: 1.0),
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.easeInOutSine,
+              builder: (_, value, child) => Transform.scale(scale: value, child: child),
               child: Container(
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [colorScheme.primary, colorScheme.secondary],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF97316), Color(0xFFFDBA74)], // L'orange CIE
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primary.withAlpha(80),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
+                    BoxShadow(color: const Color(0xFFF97316).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
                   ],
                 ),
-                child: const Icon(
-                  Icons.sms_rounded,
-                  color: Colors.white,
-                  size: 42,
-                ),
+                child: const Icon(Icons.sms_rounded, color: Colors.white, size: 42),
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              'TestifySMS',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+            const SizedBox(height: 24),
+            const Text(
+              'SMS Gateway Tester',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF374151),
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Vérification des permissions...',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+            const Text('Initialisation...', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14)),
             const SizedBox(height: 32),
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: colorScheme.primary,
-              ),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),

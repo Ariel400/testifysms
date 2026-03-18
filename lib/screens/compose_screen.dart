@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/sms_provider.dart';
 
-/// Écran de rédaction et d'envoi de SMS — style Google Messages.
+/// Écran de rédaction et d'envoi de SMS.
 class ComposeScreen extends StatefulWidget {
   const ComposeScreen({super.key});
 
@@ -78,7 +78,8 @@ class _ComposeScreenState extends State<ComposeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: success ? const Color(0xFF1E7E34) : const Color(0xFFD93025),
+        backgroundColor:
+            success ? const Color(0xFF1E7E34) : const Color(0xFFD93025),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -110,14 +111,16 @@ class _ComposeScreenState extends State<ComposeScreen> {
           child: Column(
             children: [
               // ── Champ : Destinataire ────────────────────────────────────
-              _RecipientField(controller: _phoneController, validator: _validatePhone),
+              _RecipientField(
+                  controller: _phoneController, validator: _validatePhone),
 
               const Divider(height: 1, color: Color(0xFFE8EAED)),
 
               // ── Champ : Message (zone centrale) ────────────────────────
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: TextFormField(
                     controller: _messageController,
                     validator: _validateMessage,
@@ -131,7 +134,8 @@ class _ComposeScreenState extends State<ComposeScreen> {
                     ),
                     decoration: const InputDecoration(
                       hintText: 'Rédigez un message…',
-                      hintStyle: TextStyle(color: Color(0xFF9AA0A6), fontSize: 16),
+                      hintStyle:
+                          TextStyle(color: Color(0xFF9AA0A6), fontSize: 16),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -152,7 +156,8 @@ class _ComposeScreenState extends State<ComposeScreen> {
                   ),
                   color: Colors.white,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
                     // Compteur de caractères
