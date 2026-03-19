@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.READ_SMS"/>
     <!-- Permet de recevoir les SMS entrants en temps réel -->
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <!-- Permet de lire le numéro de téléphone de l'appareil (SENDER_NUMBER) -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
     <!-- Permissions réseau requises par Flutter -->
     <uses-permission android:name="android.permission.INTERNET"/>
 

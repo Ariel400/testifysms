@@ -5,7 +5,6 @@ import '../providers/sms_provider.dart';
 import '../constants/requests.dart';
 import '../models/sms_request.dart';
 import '../widgets/message_card.dart';
-
 class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});
 
@@ -29,15 +28,33 @@ class _InboxScreenState extends State<InboxScreen> {
     final request = _selected;
     if (request == null) return;
 
-    final sender = kSenderNumber;
-    if (sender.isEmpty) {
-      _showSnackBar('SENDER_NUMBER non configuré dans .env', false);
+    final provider = context.read<SmsProvider>();
+    if (!provider.hasSimCard) {
+      _showSnackBar('Aucune carte SIM détectée sur l\'appareil.', false);
       return;
     }
 
+    final meterNumber = await _showMeterNumberDialog();
+    if (meterNumber == null || meterNumber.isEmpty) return;
+
     setState(() => _sending = true);
     try {
-      final message = request.buildMessage(sender);
+      final sender = provider.devicePhoneNumber;
+
+      if (sender.isEmpty) {
+        if (mounted) {
+          _showSnackBar(
+            provider.hasSimCard 
+              ? 'Impossible de récupérer votre numéro depuis la SIM.' 
+              : 'Aucune carte SIM détectée.', 
+            false
+          );
+        }
+        return;
+      }
+
+      final customPayload = 'client=$meterNumber';
+      final message = request.buildMessage(sender, customPayload: customPayload);
       final ok = await context.read<SmsProvider>().sendSms(
             to: kGatewayNumber,
             message: message,
@@ -53,6 +70,50 @@ class _InboxScreenState extends State<InboxScreen> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<String?> _showMeterNumberDialog() {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('Numéro de compteur',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              hintText: 'Ex: 42057051031',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFF111827), width: 2),
+              ),
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler', style: TextStyle(color: Color(0xFF6B7280))),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF111827),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Envoyer'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showSnackBar(String msg, bool success) {
@@ -135,37 +196,99 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildInfoBanner() {
-    final sender = kSenderNumber;
-    final gateway = kGatewayNumber;
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: _InfoChip(
-              icon: LucideIcons.smartphoneNfc,
-              label: 'Expéditeur',
-              value: sender.isEmpty ? 'Non configuré' : sender,
-              valueColor: sender.isEmpty
-                  ? const Color(0xFFEF4444)
-                  : const Color(0xFF111827),
+    return Consumer<SmsProvider>(
+      builder: (context, provider, _) {
+        String senderDisplay = 'Non configuré';
+        String? carrier;
+        Color senderColor = const Color(0xFFEF4444);
+
+        if (!provider.hasSimCard) {
+          senderDisplay = 'Aucune SIM trouvée';
+        } else if (provider.devicePhoneNumber.isNotEmpty) {
+          senderDisplay = provider.devicePhoneNumber;
+          carrier = provider.selectedSim?.displayName ?? provider.selectedSim?.carrierName;
+          senderColor = const Color(0xFF111827);
+        } else {
+          senderDisplay = 'Numéro requis';
+          senderColor = const Color(0xFFEF4444);
+        }
+
+        final gateway = kGatewayNumber;
+        return Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: provider.simCards.length > 1 
+                      ? () => _showSimSelectionDialog(provider) 
+                      : null,
+                  child: _InfoChip(
+                    icon: LucideIcons.smartphoneNfc,
+                    label: carrier != null ? 'Expéditeur ($carrier)' : 'Expéditeur',
+                    value: senderDisplay,
+                    valueColor: senderColor,
+                    trailing: provider.simCards.length > 1 
+                        ? const Icon(LucideIcons.chevronDown, size: 12, color: Color(0xFF9CA3AF)) 
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(LucideIcons.arrowRight,
+                  size: 16, color: Color(0xFF9CA3AF)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _InfoChip(
+                  icon: LucideIcons.serverCrash,
+                  label: 'Passerelle',
+                  value: gateway,
+                  valueColor: const Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSimSelectionDialog(SmsProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('Sélectionner la SIM',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: provider.simCards.length,
+              itemBuilder: (context, index) {
+                final sim = provider.simCards[index];
+                final isSelected = provider.selectedSim == sim;
+                return ListTile(
+                  leading: Icon(LucideIcons.smartphone, 
+                      color: isSelected ? const Color(0xFFF97316) : const Color(0xFF6B7280)),
+                  title: Text(sim.number ?? 'Numéro inconnu',
+                      style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                  subtitle: Text(sim.displayName ?? sim.carrierName ?? 'Slot ${sim.slotIndex}'),
+                  trailing: isSelected ? const Icon(LucideIcons.check, color: Color(0xFFF97316)) : null,
+                  onTap: () {
+                    provider.selectSim(sim);
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
             ),
           ),
-          const SizedBox(width: 12),
-          const Icon(LucideIcons.arrowRight,
-              size: 16, color: Color(0xFF9CA3AF)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _InfoChip(
-              icon: LucideIcons.serverCrash,
-              label: 'Passerelle',
-              value: gateway,
-              valueColor: const Color(0xFF111827),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -280,31 +403,40 @@ class _InboxScreenState extends State<InboxScreen> {
       child: SizedBox(
         width: double.infinity,
         height: 52,
-        child: FilledButton.icon(
-          onPressed: (_selected == null || _sending) ? null : _send,
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.black,
-            disabledBackgroundColor: const Color(0xFFE5E7EB),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          icon: _sending
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-              : const Icon(LucideIcons.send, size: 18, color: Colors.white),
-          label: Text(
-            _selected == null
-                ? 'Aucune requête sélectionnée'
-                : 'Envoyer — ${_selected!.label}',
-            style: TextStyle(
-              color: _selected == null ? const Color(0xFF9CA3AF) : Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
-          ),
+        child: Consumer<SmsProvider>(
+          builder: (context, provider, _) {
+            final hasSender = provider.devicePhoneNumber.isNotEmpty;
+            final canSend = _selected != null && !_sending && hasSender;
+
+            return FilledButton.icon(
+              onPressed: canSend ? _send : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.black,
+                disabledBackgroundColor: const Color(0xFFE5E7EB),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: _sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(LucideIcons.send, size: 18, color: Colors.white),
+              label: Text(
+                !hasSender
+                    ? 'Numéro expéditeur requis'
+                    : _selected == null
+                        ? 'Aucune requête sélectionnée'
+                        : 'Envoyer — ${_selected!.label}',
+                style: TextStyle(
+                  color: canSend ? Colors.white : const Color(0xFF9CA3AF),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -415,12 +547,14 @@ class _InfoChip extends StatelessWidget {
   final String label;
   final String value;
   final Color valueColor;
+  final Widget? trailing;
 
   const _InfoChip({
     required this.icon,
     required this.label,
     required this.value,
     required this.valueColor,
+    this.trailing,
   });
 
   @override
@@ -455,6 +589,10 @@ class _InfoChip extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) ...[
+            const SizedBox(width: 4),
+            trailing!,
+          ],
         ],
       ),
     );

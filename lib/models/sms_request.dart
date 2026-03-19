@@ -23,7 +23,9 @@ class SmsRequest {
 
   /// Construit le message SMS formaté selon le protocole.
   /// [senderNumber] : le numéro du téléphone qui envoie (+225XXXXXXXXX).
-  String buildMessage(String senderNumber) {
-    return 'id_app:$idApp;id_request:$_idRequest;number:$senderNumber;intent:$intent;payload:$payload';
+  /// [customPayload] : payload personnalisé à utiliser au lieu de celui par défaut.
+  String buildMessage(String senderNumber, {String? customPayload}) {
+    final finalPayload = customPayload ?? payload;
+    return 'id_app:$idApp;id_request:$_idRequest;number:$senderNumber;intent:$intent;payload:$finalPayload';
   }
 }

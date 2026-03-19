@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:telephony/telephony.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:mobile_number/mobile_number.dart';
 import '../services/sms_service.dart';
 
 /// Structure enveloppant un SMS pour savoir s'il a été envoyé ou reçu.
@@ -28,14 +29,58 @@ class SmsProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String _devicePhoneNumber = '';
+  String get devicePhoneNumber => _devicePhoneNumber;
+
+  List<SimCard> _simCards = [];
+  List<SimCard> get simCards => List.unmodifiable(_simCards);
+
+  SimCard? _selectedSim;
+  SimCard? get selectedSim => _selectedSim;
+
+  bool _hasSimCard = true;
+  bool get hasSimCard => _hasSimCard;
+
   // ─── Initialisation ───────────────────────────────────────────────────────
 
   Future<void> initialize() async {
     await checkAndRequestPermissions();
     if (_hasPermission) {
+      await _fetchDevicePhoneNumber();
       await refreshMessages();
       _setupIncomingSmsListener();
     }
+  }
+
+  Future<void> _fetchDevicePhoneNumber() async {
+    try {
+      if (await Permission.phone.isGranted || await Permission.phone.request().isGranted) {
+        final simCards = await MobileNumber.getSimCards;
+        if (simCards == null || simCards.isEmpty) {
+          _hasSimCard = false;
+          _simCards = [];
+          debugPrint('Aucune carte SIM détectée.');
+        } else {
+          _hasSimCard = true;
+          _simCards = simCards;
+          
+          // Select first SIM by default if not already selected
+          if (_selectedSim == null && _simCards.isNotEmpty) {
+            _selectedSim = _simCards.first;
+            _devicePhoneNumber = _selectedSim?.number ?? '';
+          }
+        }
+      }
+    } catch (e) {
+      _hasSimCard = false;
+      debugPrint('Error getting mobile number: $e');
+    }
+  }
+
+  void selectSim(SimCard sim) {
+    _selectedSim = sim;
+    _devicePhoneNumber = sim.number ?? '';
+    notifyListeners();
   }
 
   // ─── Permissions ──────────────────────────────────────────────────────────
